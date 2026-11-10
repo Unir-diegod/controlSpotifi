@@ -1,0 +1,159 @@
+{% extends "control/base.html" %}
+{% load money %}
+{% block title %}Integrantes | Family Flow{% endblock %}
+{% block page_name %}Integrantes{% endblock %}
+{% block content %}
+<section class="view-section">
+    <!-- Cabecera de página -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Integrantes</h1>
+            <p class="page-subtitle">Administración de miembros del grupo y seguimiento de cuotas individuales.</p>
+        </div>
+        <div class="page-actions">
+            <button class="btn-flat btn-primary-flat" type="button" data-bs-toggle="modal" data-bs-target="#memberModal">
+                <i class="bi bi-person-plus-fill"></i> Nuevo integrante
+            </button>
+        </div>
+    </div>
+
+    <!-- Barra de métricas rápidas -->
+    <div class="summary-stats-bar">
+        <div class="stat-pill-group">
+            <div class="stat-pill">
+                <span class="stat-pill-label">Total registrados</span>
+                <strong class="stat-pill-val">{{ members|length }}</strong>
+            </div>
+            <div class="stat-pill">
+                <span class="stat-pill-label">Al día</span>
+                <strong class="stat-pill-val text-success">{{ paid_count }}</strong>
+            </div>
+            <div class="stat-pill">
+                <span class="stat-pill-label">Con saldo pendiente</span>
+                <strong class="stat-pill-val text-warning">{{ pending_count }}</strong>
+            </div>
+            <div class="stat-pill">
+                <span class="stat-pill-label">Recaudo esperado</span>
+                <strong class="stat-pill-val">{{ total_expected|currency }}</strong>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de Integrantes -->
+    <div class="flat-panel mt-3">
+        <div class="panel-header">
+            <div>
+                <h2 class="panel-title">Listado de miembros</h2>
+                <p class="panel-subtitle">Seguimiento de aportes para el periodo de {{ month|date:"F Y" }}</p>
+            </div>
+            <span class="table-counter">{{ members|length }} registros</span>
+        </div>
+
+        <div class="table-responsive">
+            <table class="flat-table">
+                <thead>
+                    <tr>
+                        <th>NOMBRE</th>
+                        <th>CUOTA ASIGNADA</th>
+                        <th>ÚLTIMO PAGO</th>
+                        <th>SALDO PENDIENTE</th>
+                        <th>ESTADO</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for member in members %}
+                        <tr>
+                            <td>
+                                <div class="table-user-cell">
+                                    <div class="mini-avatar">{{ member.name|first|upper }}</div>
+                                    <span class="fw-medium text-dark">{{ member.name }}</span>
+                                </div>
+                            </td>
+                            <td class="font-monospace">{{ member.monthly_fee|currency }}</td>
+                            <td>
+                                {% if member.last_payment %}
+                                    {{ member.last_payment|date:"d M, Y" }}
+                                {% else %}
+                                    <span class="text-muted small">Sin registros</span>
+                                {% endif %}
+                            </td>
+                            <td class="font-monospace">
+                                {% if member.pending_amount %}
+                                    <span class="text-danger fw-semibold">{{ member.pending_amount|currency }}</span>
+                                {% else %}
+                                    <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if member.payment_status == "paid" %}
+                                    <span class="badge-flat badge-success">Al día</span>
+                                {% elif member.payment_status == "partial" %}
+                                    <span class="badge-flat badge-info">Abono parcial</span>
+                                {% else %}
+                                    <span class="badge-flat badge-warning">Pendiente</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="5" class="empty-cell">
+                                No hay integrantes registrados en el sistema. Utiliza el botón "Nuevo integrante" para añadir uno.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<!-- Modal Nuevo Integrante -->
+{% if member_form.errors %}
+<div class="modal fade" id="memberModal" tabindex="-1" aria-labelledby="memberModalLabel" aria-hidden="true" data-open-modal>
+{% else %}
+<div class="modal fade" id="memberModal" tabindex="-1" aria-labelledby="memberModalLabel" aria-hidden="true">
+{% endif %}
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content flat-modal">
+            <div class="modal-header">
+                <div>
+                    <h2 class="modal-title" id="memberModalLabel">Nuevo integrante</h2>
+                    <p class="modal-subtitle">Añadir una nueva persona a la cuenta y definir su aporte mensual.</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <form method="post" action="{% url 'control:members' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    {% if member_form.non_field_errors %}
+                        <div class="alert alert-danger py-2 small mb-3">{{ member_form.non_field_errors }}</div>
+                    {% endif %}
+                    <div class="form-group mb-3">
+                        <label class="form-label" for="{{ member_form.name.id_for_label }}">Nombre completo</label>
+                        {{ member_form.name }}
+                        {% for error in member_form.name.errors %}
+                            <small class="field-error">{{ error }}</small>
+                        {% endfor %}
+                    </div>
+                    <div class="form-group mb-2">
+                        <label class="form-label" for="{{ member_form.monthly_fee.id_for_label }}">Cuota mensual asignada</label>
+                        <div class="input-prefix-wrapper">
+                            <span class="input-currency">$</span>
+                            {{ member_form.monthly_fee }}
+                        </div>
+                        {% for error in member_form.monthly_fee.errors %}
+                            <small class="field-error">{{ error }}</small>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-flat btn-outline" data-bs-dismiss="modal">Cancelar</button>
+                    <button class="btn-flat btn-primary-flat" type="submit">
+                        <i class="bi bi-person-check"></i> Guardar integrante
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

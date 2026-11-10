@@ -1,0 +1,118 @@
+{% extends "control/base.html" %}
+{% load money %}
+{% block title %}Historial de pagos | Family Flow{% endblock %}
+{% block page_name %}Historial de pagos{% endblock %}
+{% block content %}
+<section class="view-section">
+    <!-- Cabecera de página -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Historial de pagos</h1>
+            <p class="page-subtitle">Registro cronológico de aportes y movimientos correspondientes a {{ month|date:"F Y" }}.</p>
+        </div>
+        <div class="page-actions">
+            {% if members %}
+                <button class="btn-flat btn-primary-flat" type="button" data-bs-toggle="modal" data-bs-target="#paymentModal">
+                    <i class="bi bi-plus-lg"></i> Registrar pago
+                </button>
+            {% else %}
+                <a class="btn-flat btn-outline" href="{% url 'control:members' %}">
+                    <i class="bi bi-person-plus"></i> Ir a Integrantes
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Barra de resumen plano de recaudación -->
+    <div class="corporate-summary-card">
+        <div class="summary-card-metric">
+            <span class="summary-card-label">Total recaudado</span>
+            <div class="summary-card-value text-success">{{ total_received|currency }}</div>
+            <span class="summary-card-context">de {{ total_expected|currency }} esperados</span>
+        </div>
+        <div class="summary-card-progress">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="small text-secondary fw-medium">Cumplimiento mensual</span>
+                <span class="small fw-bold text-dark">{{ progress }}%</span>
+            </div>
+            <div class="flat-progress-bar" role="progressbar" aria-label="Porcentaje de recaudo" aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100">
+                <div class="flat-progress-fill" style="width: {{ progress }}%;"></div>
+            </div>
+        </div>
+        <div class="summary-card-aside">
+            <span class="summary-card-label">Por recaudar</span>
+            <div class="summary-card-value text-warning">{{ total_pending|currency }}</div>
+            <span class="summary-card-context">{{ pending_count }} cuotas restantes</span>
+        </div>
+    </div>
+
+    {% if not members %}
+        <div class="empty-state-card mt-3">
+            <i class="bi bi-info-circle empty-state-icon"></i>
+            <div>
+                <strong>Aún no hay integrantes registrados</strong>
+                <p>Para registrar pagos en este periodo, primero debes dar de alta a los miembros de la cuenta.</p>
+            </div>
+            <a class="btn-flat btn-primary-flat" href="{% url 'control:members' %}">Registrar integrante</a>
+        </div>
+    {% endif %}
+
+    <!-- Tabla de Pagos -->
+    <div class="flat-panel mt-3">
+        <div class="panel-header">
+            <div>
+                <h2 class="panel-title">Movimientos registrados</h2>
+                <p class="panel-subtitle">Transacciones confirmadas durante el mes en curso</p>
+            </div>
+            <span class="table-counter">{{ payments|length }} transacciones</span>
+        </div>
+
+        <div class="table-responsive">
+            <table class="flat-table">
+                <thead>
+                    <tr>
+                        <th>INTEGRANTE</th>
+                        <th>FECHA</th>
+                        <th>MÉTODO DE PAGO</th>
+                        <th>MONTO</th>
+                        <th>ESTADO</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for payment in payments %}
+                        <tr>
+                            <td>
+                                <div class="table-user-cell">
+                                    <div class="mini-avatar">{{ payment.member.name|first|upper }}</div>
+                                    <span class="fw-medium text-dark">{{ payment.member.name }}</span>
+                                </div>
+                            </td>
+                            <td>{{ payment.paid_at|date:"d M, Y" }}</td>
+                            <td>
+                                <span class="method-tag">
+                                    {% if payment.method == 'nequi' %}
+                                        <i class="bi bi-phone"></i>
+                                    {% elif payment.method == 'efectivo' %}
+                                        <i class="bi bi-cash"></i>
+                                    {% else %}
+                                        <i class="bi bi-bank"></i>
+                                    {% endif %}
+                                    <span>{{ payment.get_method_display }}</span>
+                                </span>
+                            </td>
+                            <td class="font-monospace fw-semibold">{{ payment.amount|currency }}</td>
+                            <td><span class="badge-flat badge-success">Registrado</span></td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="5" class="empty-cell">
+                                No se han registrado pagos durante este periodo.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+{% endblock %}

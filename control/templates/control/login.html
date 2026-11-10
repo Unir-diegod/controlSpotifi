@@ -1,0 +1,32 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#101b17">
+    <title>Iniciar sesión | Family Flow</title>
+    <link rel="stylesheet" href="{% static 'control/css/style.css' %}">
+</head>
+<body>
+    <main class="login-page">
+        <section class="login-card">
+            <a class="brand" href="{% url 'control:login' %}">
+                <span class="brand-mark" aria-hidden="true">♫</span>
+                <span>family<span class="brand-light">.flow</span></span>
+            </a>
+            <p class="eyebrow">PANEL ADMINISTRATIVO</p>
+            <h1>Bienvenido</h1>
+            <p>Inicia sesión para administrar los integrantes y pagos de tu cuenta familiar.</p>
+            {% if form.errors %}<p class="message error">Usuario o contraseña incorrectos. Inténtalo de nuevo.</p>{% endif %}
+            <form method="post">
+                {% csrf_token %}
+                <div class="field"><label for="{{ form.username.id_for_label }}">Usuario</label>{{ form.username }}</div>
+                <div class="field"><label for="{{ form.password.id_for_label }}">Contraseña</label>{{ form.password }}</div>
+                {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+                <button class="button button-primary" type="submit">Iniciar sesión</button>
+            </form>
+        </section>
+    </main>
+</body>
+</html>

@@ -1,0 +1,108 @@
+{% extends "control/base.html" %}
+{% load money %}
+{% block title %}Reportes y balance | Family Flow{% endblock %}
+{% block page_name %}Reportes y balance{% endblock %}
+{% block content %}
+<section class="view-section">
+    <!-- Cabecera de página -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Reportes y balance</h1>
+            <p class="page-subtitle">Balance consolidado del periodo y análisis de cumplimiento de aportes.</p>
+        </div>
+        <div class="chip-item">
+            <i class="bi bi-calendar3"></i>
+            <span>{{ month|date:"F Y"|capfirst }}</span>
+        </div>
+    </div>
+
+    <!-- Indicadores clave de reporte -->
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-header">
+                <span class="kpi-label">Presupuesto esperado</span>
+                <i class="bi bi-wallet2 kpi-icon text-muted"></i>
+            </div>
+            <div class="kpi-value">{{ total_expected|currency }}</div>
+            <div class="kpi-footer">{{ members|length }} cuotas presupuestadas</div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-header">
+                <span class="kpi-label">Total recaudado</span>
+                <i class="bi bi-check2-circle kpi-icon text-success"></i>
+            </div>
+            <div class="kpi-value text-success-emphasis">{{ total_received|currency }}</div>
+            <div class="kpi-footer"><strong class="text-success">{{ progress }}%</strong> de la meta completada</div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-header">
+                <span class="kpi-label">Saldo por cobrar</span>
+                <i class="bi bi-exclamation-circle kpi-icon text-warning"></i>
+            </div>
+            <div class="kpi-value text-warning-emphasis">{{ total_pending|currency }}</div>
+            <div class="kpi-footer"><strong class="text-warning">{{ pending_count }}</strong> cuotas pendientes</div>
+        </div>
+    </div>
+
+    <!-- Panel de Distribución y Balance -->
+    <div class="flat-panel max-w-report mt-4">
+        <div class="panel-header">
+            <div>
+                <h2 class="panel-title">Estado de los pagos</h2>
+                <p class="panel-subtitle">Distribución porcentual de las cuotas del mes</p>
+            </div>
+            <span class="table-counter">{{ members|length }} integrantes en total</span>
+        </div>
+
+        <div class="report-distribution-block">
+            <!-- Pagados -->
+            <div class="distribution-row">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="distribution-label">
+                        <span class="status-dot-sm bg-success"></span>
+                        <strong>Cuotas cubiertas</strong>
+                    </span>
+                    <span class="distribution-numbers">
+                        <strong>{{ paid_count }}</strong> personas
+                        <span class="text-muted">({{ total_received|currency }})</span>
+                        <span class="badge-flat badge-success ms-2">{{ paid_percent }}%</span>
+                    </span>
+                </div>
+                <div class="flat-progress-bar" role="progressbar" aria-label="Porcentaje pagado" aria-valuenow="{{ paid_percent }}" aria-valuemin="0" aria-valuemax="100">
+                    <div class="flat-progress-fill" style="width: {{ paid_percent }}%"></div>
+                </div>
+            </div>
+
+            <!-- Pendientes -->
+            <div class="distribution-row mt-4">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="distribution-label">
+                        <span class="status-dot-sm bg-warning"></span>
+                        <strong>Cuotas pendientes o parciales</strong>
+                    </span>
+                    <span class="distribution-numbers">
+                        <strong>{{ pending_count }}</strong> personas
+                        <span class="text-muted">({{ total_pending|currency }})</span>
+                        <span class="badge-flat badge-warning ms-2">{{ pending_percent }}%</span>
+                    </span>
+                </div>
+                <div class="flat-progress-bar" role="progressbar" aria-label="Porcentaje pendiente" aria-valuenow="{{ pending_percent }}" aria-valuemin="0" aria-valuemax="100">
+                    <div class="flat-progress-fill bg-warning" style="width: {{ pending_percent }}%"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel-divider"></div>
+
+        <div class="report-summary-footer">
+            <span class="text-secondary fw-medium">Tasa global de efectividad de recaudo</span>
+            <div class="d-flex align-items-baseline gap-2">
+                <span class="report-big-percent">{{ progress }}%</span>
+                <span class="small text-muted">completado</span>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

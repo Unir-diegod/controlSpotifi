@@ -1,0 +1,195 @@
+{% extends "control/base.html" %}
+{% load money %}
+{% block title %}Panel general | Family Flow{% endblock %}
+{% block page_name %}Panel general{% endblock %}
+{% block content %}
+<section class="view-section">
+    <!-- Cabecera de vista plana -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Panel general</h1>
+            <p class="page-subtitle">Estado de recaudo y control de cuotas correspondiente a {{ month|date:"F Y" }}.</p>
+        </div>
+        <div class="page-actions">
+            {% if members %}
+                <button class="btn-flat btn-primary-flat" type="button" data-bs-toggle="modal" data-bs-target="#paymentModal">
+                    <i class="bi bi-plus-lg"></i> Registrar pago
+                </button>
+            {% else %}
+                <a class="btn-flat btn-primary-flat" href="{% url 'control:members' %}">
+                    <i class="bi bi-person-plus"></i> Agregar integrantes
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Tarjetas de métricas (KPIs corporativos) -->
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-header">
+                <span class="kpi-label">Meta del periodo</span>
+                <i class="bi bi-bullseye kpi-icon text-muted"></i>
+            </div>
+            <div class="kpi-value">{{ total_expected|currency }}</div>
+            <div class="kpi-footer">Cuotas mensuales presupuestadas</div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-header">
+                <span class="kpi-label">Total recaudado</span>
+                <i class="bi bi-cash-stack kpi-icon text-success"></i>
+            </div>
+            <div class="kpi-value text-success-emphasis">{{ total_received|currency }}</div>
+            <div class="kpi-footer">
+                <strong class="text-success">{{ paid_count }}</strong> de {{ members|length }} integrantes al día
+            </div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-header">
+                <span class="kpi-label">Saldo pendiente</span>
+                <i class="bi bi-hourglass-split kpi-icon text-warning"></i>
+            </div>
+            <div class="kpi-value text-warning-emphasis">{{ total_pending|currency }}</div>
+            <div class="kpi-footer">
+                <strong class="text-warning">{{ pending_count }}</strong> cuotas por recaudar
+            </div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-header">
+                <span class="kpi-label">Integrantes</span>
+                <i class="bi bi-people kpi-icon text-primary"></i>
+            </div>
+            <div class="kpi-value">{{ members|length }}</div>
+            <div class="kpi-footer">Miembros activos en la cuenta</div>
+        </div>
+    </div>
+
+    <!-- Grilla de balance y pendientes -->
+    <div class="dashboard-split-grid">
+        <!-- Progreso de recaudo -->
+        <div class="flat-panel">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">Progreso de recaudación</h2>
+                    <p class="panel-subtitle">Cumplimiento de la meta del mes</p>
+                </div>
+                <span class="percentage-pill">{{ progress }}%</span>
+            </div>
+
+            <div class="flat-progress-bar" role="progressbar" aria-label="Progreso de recaudación" aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100">
+                <div class="flat-progress-fill" style="width: {{ progress }}%"></div>
+            </div>
+
+            <div class="progress-meta">
+                <div class="meta-item">
+                    <span class="meta-label">Recaudado</span>
+                    <strong class="meta-value">{{ total_received|currency }}</strong>
+                </div>
+                <div class="meta-item text-end">
+                    <span class="meta-label">Presupuesto</span>
+                    <strong class="meta-value">{{ total_expected|currency }}</strong>
+                </div>
+            </div>
+
+            <div class="panel-footer-stat">
+                <span>Saldo restante para completar la meta</span>
+                <strong>{{ total_pending|currency }}</strong>
+            </div>
+        </div>
+
+        <!-- Integrantes con cuotas pendientes -->
+        <div class="flat-panel">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">Cuotas pendientes</h2>
+                    <p class="panel-subtitle">Integrantes con saldo por cubrir</p>
+                </div>
+                <span class="count-badge">{{ pending_count }}</span>
+            </div>
+
+            <div class="pending-list">
+                {% for member in members %}
+                    {% if member.pending_amount %}
+                        <div class="pending-item">
+                            <div class="member-avatar">{{ member.name|first|upper }}</div>
+                            <div class="member-details">
+                                <span class="member-name">{{ member.name }}</span>
+                                <span class="member-period">{{ month|date:"F Y"|capfirst }}</span>
+                            </div>
+                            <div class="member-amount">{{ member.pending_amount|currency }}</div>
+                        </div>
+                    {% endif %}
+                {% empty %}
+                    <div class="empty-panel-state">
+                        <p>No hay integrantes registrados en el sistema.</p>
+                    </div>
+                {% endfor %}
+
+                {% if pending_count == 0 and members %}
+                    <div class="empty-panel-state text-success">
+                        <i class="bi bi-check-circle fs-4 mb-2 d-block"></i>
+                        <p class="mb-0 fw-medium">Todas las cuotas de este mes están cubiertas.</p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="panel-action-bar">
+                <a class="flat-link" href="{% url 'control:members' %}">
+                    <span>Gestionar integrantes</span>
+                    <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de últimos movimientos -->
+    <div class="flat-panel mt-4">
+        <div class="panel-header">
+            <div>
+                <h2 class="panel-title">Últimos pagos registrados</h2>
+                <p class="panel-subtitle">Transacciones recibidas recientemente</p>
+            </div>
+            <a class="flat-link" href="{% url 'control:payments' %}">
+                <span>Ver historial completo</span>
+                <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+
+        <div class="table-responsive">
+            <table class="flat-table">
+                <thead>
+                    <tr>
+                        <th>INTEGRANTE</th>
+                        <th>FECHA</th>
+                        <th>MÉTODO</th>
+                        <th>MONTO</th>
+                        <th>ESTADO</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for payment in recent_payments %}
+                        <tr>
+                            <td>
+                                <div class="table-user-cell">
+                                    <div class="mini-avatar">{{ payment.member.name|first|upper }}</div>
+                                    <span class="fw-medium text-dark">{{ payment.member.name }}</span>
+                                </div>
+                            </td>
+                            <td>{{ payment.paid_at|date:"d M, Y" }}</td>
+                            <td>{{ payment.get_method_display }}</td>
+                            <td class="font-monospace fw-semibold">{{ payment.amount|currency }}</td>
+                            <td><span class="badge-flat badge-success">Pagado</span></td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="5" class="empty-cell">No se registran pagos en el periodo seleccionado.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+{% endblock %}
