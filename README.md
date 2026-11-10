@@ -1,38 +1,78 @@
 # Family Flow
 
-Panel Django para controlar integrantes, cuotas y pagos de una cuenta familiar. Las vistas se renderizan con el motor de plantillas de Django; los datos se guardan en SQLite.
+Sistema de gestión y control de aportes y cuotas familiares, desarrollado en Django con interfaz plana corporativa y arquitectura lista para producción con PostgreSQL.
 
-La interfaz interna utiliza Bootstrap 5 y Bootstrap Icons desde jsDelivr, por lo que se requiere conexión a internet para cargar esos recursos. El login no usa Bootstrap.
+---
 
-## Requisitos
+## 🚀 Requisitos
 
-- Python 3.10 o superior
+- **Python 3.10** o superior
+- **PostgreSQL 14** o superior (local o gestionado en la nube como Neon, Supabase, Railway, Render, AWS RDS, etc.)
 
-## Preparar el proyecto
+---
 
-Desde la carpeta del proyecto, crea y activa un entorno virtual e instala las dependencias:
+## ⚙️ Configuración de Variables de Entorno (Cero datos quemados)
 
-```powershell
-py -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
+El proyecto no contiene contraseñas, secretos ni conexiones fijas en el código. Toda la configuración se realiza mediante variables de entorno.
+
+Copia el archivo de ejemplo para configurar tu entorno:
+
+```bash
+cp .env.example .env
 ```
 
-Inicializa la base de datos y ejecuta el servidor de desarrollo:
+### Variables requeridas:
 
-```powershell
-python manage.py migrate
-python manage.py runserver
+| Variable | Descripción | Ejemplo |
+|---|---|---|
+| `DJANGO_SECRET_KEY` | Clave criptográfica de Django (obligatoria) | `django-insecure-tu-clave-super-secreta` |
+| `DJANGO_DEBUG` | `True` para desarrollo local, `False` para producción | `False` |
+| `ALLOWED_HOSTS` | Dominios permitidos separados por comas | `miapp.com,www.miapp.com` |
+| `DATABASE_URL` | Cadena de conexión a PostgreSQL (opción recomendada) | `postgresql://usuario:password@host:5432/nombre_db` |
+| `CSRF_TRUSTED_ORIGINS` | Orígenes permitidos para peticiones POST HTTPS | `https://miapp.com,https://www.miapp.com` |
+
+> Alternativamente a `DATABASE_URL`, puedes usar variables individuales: `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT`.
+
+---
+
+## 📦 Puesta en Marcha Local
+
+1. **Activa el entorno virtual e instala las dependencias**:
+   ```powershell
+   .\.venv\Scripts\Activate.ps1
+   pip install -r requirements.txt
+   ```
+
+2. **Aplica las migraciones en PostgreSQL**:
+   ```powershell
+   python manage.py migrate
+   ```
+
+3. **Crea el usuario administrador**:
+   ```powershell
+   python manage.py createsuperuser
+   ```
+
+4. **Inicia el servidor**:
+   ```powershell
+   python manage.py runserver
+   ```
+
+---
+
+## 🌐 Despliegue en Producción (Railway / Render / Fly.io / VPS)
+
+El proyecto incluye:
+- **WhiteNoise** preconfigurado para servir archivos estáticos (`collectstatic`) con compresión y caché de alto rendimiento.
+- **Gunicorn** como servidor WSGI listo para recibir tráfico de producción.
+- **Protección HTTPS**: Redirección SSL automática, cookies seguras (`SESSION_COOKIE_SECURE`, `CSRF_COOKIE_SECURE`) y cabeceras HSTS activas cuando `DJANGO_DEBUG=False`.
+
+### Comando de inicio en producción (Procfile / Start Command):
+```bash
+gunicorn familyflow.wsgi:application
 ```
 
-Abre `http://127.0.0.1:8000/`. Los módulos de integrantes, pagos, dashboard y reportes usan los registros almacenados en `db.sqlite3`.
-
-La primera vez, crea el usuario administrador requerido para iniciar sesión:
-
-```powershell
-python manage.py createsuperuser
+### Comando de compilación (Build Command):
+```bash
+pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate
 ```
-
-Inicia sesión con esa cuenta en la aplicación. Para administrar los datos desde Django Admin, visita `/admin/`.
-
-> La aplicación registra manualmente las cuotas del grupo; no se conecta ni sincroniza con Spotify.
